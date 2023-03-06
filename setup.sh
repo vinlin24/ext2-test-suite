@@ -31,6 +31,7 @@ make &&
     cp "$tarball_name" "$lab_dir" &&
     cd "$lab_dir" &&
     tar -xf "$tarball_name" &&
+    rm "$tarball_name" &&
     echo -en "$ignore_additions" >>.gitignore
 
 RED=$(tput setaf 1)
