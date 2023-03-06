@@ -34,11 +34,13 @@ make &&
     rm "$tarball_name" &&
     echo -en "$ignore_additions" >>.gitignore
 
+setup_code=$?
+
 RED=$(tput setaf 1)
 GREEN=$(tput setaf 2)
 END=$(tput sgr0)
 
-if [ $? -eq 0 ]; then
+if [ $setup_code -eq 0 ]; then
     echo -n "${GREEN}The lab suite has been set up in ${lab_dir}. "
     echo "Happy coding!${END}"
 else
