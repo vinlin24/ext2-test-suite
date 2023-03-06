@@ -14,7 +14,7 @@ USAGE: `./dump_block.py --help`
 
 import subprocess
 import sys
-from argparse import ArgumentParser, ArgumentTypeError
+from argparse import ArgumentParser, ArgumentTypeError, RawTextHelpFormatter
 from enum import IntEnum
 from pathlib import Path
 from typing import Optional
@@ -84,11 +84,30 @@ def valid_offset(value: str) -> int:
     return as_int
 
 
-parser = ArgumentParser(prog=sys.argv[0],
-                        description="Dump the binary of the specified blocks.")
+RECOGNIZED_BLOCK_NAMES = "\n".join(f"  {e.name}" for e in BlockNames)
 
-parser.add_argument("block_nums", metavar="BLOCK_NUM",
-                    nargs="*", type=valid_blockno, default=[1])
+DESCRIPTION = f"""\
+Dump the binary of the specified block(s).
+
+Recognized block names (case-insensitive) are:
+{RECOGNIZED_BLOCK_NAMES}
+
+Example usages:
+
+    * Viewing your full inode bitmap:
+        ./dump_block.py inode_bitmap --binary
+
+    * Checking a specific struct field, like u16 s_magic:
+        ./dump_block.py superblock -o 0x37 -l 2
+"""
+
+parser = ArgumentParser(prog=sys.argv[0],
+                        description=DESCRIPTION,
+                        formatter_class=RawTextHelpFormatter)
+
+parser.add_argument("block_nums", metavar="BLOCK",
+                    nargs="*", type=valid_blockno, default=[1],
+                    help="number or name of block(s) to dump")
 
 parser.add_argument("-o", "--offset", metavar="NBYTES",
                     type=valid_offset, default=0,
@@ -161,10 +180,6 @@ def dump_all(dump_file: Path, binary: bool) -> None:
 
 
 def main() -> None:
-    if not IMG_FILE.exists() and not make_img():
-        sys.stderr.write(f"Could not generate {IMG_FILE}, aborting.\n")
-        sys.exit(1)
-
     namespace = parser.parse_args()
     dump_file = namespace.dump_file
     binary = namespace.binary
@@ -179,6 +194,11 @@ def main() -> None:
 
     # Don't let length go beyond a block.
     length = bound_length(length, offset)
+
+    # Ensure that the img file exists.
+    if not IMG_FILE.exists() and not make_img():
+        sys.stderr.write(f"Could not generate {IMG_FILE}, aborting.\n")
+        sys.exit(1)
 
     for block_num in block_nums:
         # Attempt to get name information about this current block.
