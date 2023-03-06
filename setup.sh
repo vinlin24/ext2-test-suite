@@ -19,14 +19,19 @@ fi
 tarball_name=$(sed -En 's/all: (.+)$/\1/p' Makefile)
 suite_files=$(sed -En 's/SUITE_FILES = (.+)/\1/p' Makefile | tr ' ' '\n')
 
-ignore_additions="\n# Test suite\n*.tar\n${suite_files}"
+ignore_additions="\n# Test suite\n*.tar\n${suite_files}\n"
+
+# Their .gitignore has already set up this test suite before.
+if grep -q '# Test suite' "${lab_dir}/.gitignore" 2>/dev/null; then
+    ignore_additions=""
+fi
 
 # Actual setup sequence.
 make &&
     cp "$tarball_name" "$lab_dir" &&
     cd "$lab_dir" &&
     tar -xf "$tarball_name" &&
-    echo -e "$ignore_additions" >>.gitignore
+    echo -en "$ignore_additions" >>.gitignore
 
 RED=$(tput setaf 1)
 GREEN=$(tput setaf 2)
