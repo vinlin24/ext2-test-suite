@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 """dump_block.py
 
-Dump the binary of the img file for debugging.
+Dump the binary of the img file for debugging.  Forwards most of options
+to the underlying xxd command, with a few controlled exceptions.
 
 USAGE: `./dump_block.py --all FILE`
+
+USAGE: `./dump_block.py 1`
 
 USAGE: `./dump_block.py --help`
 """
@@ -17,7 +20,7 @@ import sys
 from argparse import ArgumentParser, ArgumentTypeError, RawTextHelpFormatter
 from enum import IntEnum
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 __author__ = "Vincent Lin"
 
@@ -84,12 +87,14 @@ def valid_offset(value: str) -> int:
     return as_int
 
 
-RECOGNIZED_BLOCK_NAMES = "\n".join(f"  {e.name}" for e in BlockNames)
+RECOGNIZED_BLOCK_NAMES = "\n".join(f"  {e.name} = {e.value}"
+                                   for e in BlockNames)
 
 DESCRIPTION = f"""\
-Dump the binary of the specified block(s).
+Dump the binary of the specified block.
 
 Recognized block names (case-insensitive) are:
+
 {RECOGNIZED_BLOCK_NAMES}
 
 Example usages:
@@ -99,17 +104,26 @@ Example usages:
 
     * Checking a specific struct field, like u16 s_magic:
         ./dump_block.py superblock -o 0x37 -l 2
+
+    * Forwarding formatting options to xxd:
+        ./dump_block.py 21 -g 1 -c 24
 """
 
 parser = ArgumentParser(prog=sys.argv[0],
                         description=DESCRIPTION,
                         formatter_class=RawTextHelpFormatter)
 
-parser.add_argument("block_nums", metavar="BLOCK",
-                    nargs="*", type=valid_blockno, default=[1],
-                    help="number or name of block(s) to dump")
+parser.add_argument("block_num", metavar="BLOCK", nargs="?",
+                     type=valid_blockno, default=BlockNames.SUPERBLOCK.value,
+                     help="number or name of block to dump")
 
-# Added -s as an alias to be consistent with xxd's offset option.
+parser.add_argument("-a", "--all", metavar="FILE", dest="dump_file",
+                    help=("dump the entire img to a file "
+                         "(ignores most other options)"))
+
+# Added -s as an alias to be consistent with xxd's offset option.  Also,
+# intercepting it here will make sure it doesn't override our controlled
+# -o option.
 parser.add_argument("-o", "-s", "--offset", metavar="NBYTES",
                     type=valid_offset, default=0,
                     help="offset within the block")
@@ -123,10 +137,6 @@ parser.add_argument("-q", "--quiet", action="store_true",
 
 parser.add_argument("-b", "--binary", action="store_true",
                     help="use binary instead of hexadecimal")
-
-parser.add_argument("-a", "--all", metavar="FILE", dest="dump_file",
-                    help=("dump the entire img to a file "
-                          "(ignores most other options)"))
 
 
 def run(script: str) -> subprocess.CompletedProcess[bytes]:
@@ -147,10 +157,12 @@ def bound_length(length: int, offset: int) -> int:
     return min(length, BLOCK_SIZE - offset)
 
 
-def prepare_xxd(absolute_offset: int, length: int, binary: bool) -> str:
-    command = (
-        f"xxd -s {absolute_offset} -l {length} -c {8 if binary else 16} "
-        f"-g 1 {'-b' if binary else ''} {IMG_FILE}")
+def prepare_xxd(absolute_offset: int, length: int, binary: bool,
+                unknowns: List[str]) -> str:
+    # Forward custom xxd arguments to xxd.
+    custom_args = " ".join(unknowns)
+    command = (f"xxd -s {absolute_offset} -l {length} "
+               f"{'-b' if binary else ''} {custom_args} {IMG_FILE} ")
     return command
 
 
@@ -170,7 +182,7 @@ def dump_all(dump_file: Path, binary: bool, quiet: bool) -> None:
     with dump_file.open("wt", encoding="utf-8") as fp:
         for block_num in range(NUM_BLOCKS):
             absolute_offset = calc_abs_offset(block_num, 0)
-            command = prepare_xxd(absolute_offset, BLOCK_SIZE, binary)
+            command = prepare_xxd(absolute_offset, BLOCK_SIZE, binary, [])
 
             output = run(command).stdout.decode()
 
@@ -186,7 +198,7 @@ def dump_all(dump_file: Path, binary: bool, quiet: bool) -> None:
 
 
 def main() -> None:
-    namespace = parser.parse_args()
+    namespace, unknowns = parser.parse_known_args()
     dump_file = namespace.dump_file
     binary = namespace.binary
     quiet = namespace.quiet
@@ -195,10 +207,9 @@ def main() -> None:
         dump_all(Path(dump_file), binary, quiet)
         return
 
-    block_nums = namespace.block_nums
+    block_num = namespace.block_num
     offset = namespace.offset
     length = namespace.length
-    quiet = namespace.quiet
 
     # Don't let length go beyond a block.
     length = bound_length(length, offset)
@@ -208,27 +219,26 @@ def main() -> None:
         sys.stderr.write(f"Could not generate {IMG_FILE}, aborting.\n")
         sys.exit(1)
 
-    for block_num in block_nums:
+    absolute_offset = calc_abs_offset(block_num, offset)
+    command = prepare_xxd(absolute_offset, length, binary, unknowns)
+
+    # Echo the underlying command.
+    if not quiet:
+        print(f"{BLACK}{command}{END}")
+
+    output = run(command).stdout.decode()
+
+    # Format the header.
+    if not quiet:
         # Attempt to get name information about this current block.
         name = get_block_name(block_num)
+        slicing = f"{offset}:{offset+length}"
+        location = f"{block_num:04} @ {hex(absolute_offset)}"
+        header = f"BLOCK {location} [{slicing}]"
+        suffix = "" if name is None else f" ({name})"
+        print(f"{GREEN}{header}{END}{YELLOW}{suffix}{END}")
 
-        absolute_offset = calc_abs_offset(block_num, offset)
-        command = prepare_xxd(absolute_offset, length, binary)
-        output = run(command).stdout.decode()
-
-        if not quiet:
-            # Echo the underlying command.
-            print(f"{BLACK}{command}{END}")
-
-        # Format the header.
-        if not quiet:
-            slicing = f"{offset}:{offset+length}"
-            location = f"{block_num:04} @ {hex(absolute_offset)}"
-            header = f"BLOCK {location} [{slicing}]"
-            suffix = "" if name is None else f" ({name})"
-            print(f"{GREEN}{header}{END}{YELLOW}{suffix}{END}")
-
-        print(output)
+    print(output)
 
 
 if __name__ == "__main__":
