@@ -166,19 +166,21 @@ def get_block_name(block_num: int) -> Optional[str]:
         return None
 
 
-def dump_all(dump_file: Path, binary: bool) -> None:
+def dump_all(dump_file: Path, binary: bool, quiet: bool) -> None:
     with dump_file.open("wt", encoding="utf-8") as fp:
         for block_num in range(NUM_BLOCKS):
             absolute_offset = calc_abs_offset(block_num, 0)
             command = prepare_xxd(absolute_offset, BLOCK_SIZE, binary)
 
             output = run(command).stdout.decode()
-            header = f"BLOCK {block_num:04}"
-            name = get_block_name(block_num)
-            if name is not None:
-                header += f" ({name})"
 
-            fp.write(header + "\n")
+            if not quiet:
+                header = f"BLOCK {block_num:04}"
+                name = get_block_name(block_num)
+                if name is not None:
+                    header += f" ({name})"
+                fp.write(header + "\n")
+
             fp.write(output)
             fp.write("\n")
 
@@ -187,9 +189,10 @@ def main() -> None:
     namespace = parser.parse_args()
     dump_file = namespace.dump_file
     binary = namespace.binary
+    quiet = namespace.quiet
 
     if dump_file is not None:
-        dump_all(Path(dump_file), binary)
+        dump_all(Path(dump_file), binary, quiet)
         return
 
     block_nums = namespace.block_nums
