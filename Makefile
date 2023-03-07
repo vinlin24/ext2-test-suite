@@ -6,6 +6,8 @@ else
 	LDFLAGS = -lrt -pthread -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now
 endif
 
+SIMULATION_DIR = setup-test
+
 .PHONY: all
 all: ext2-create
 
@@ -19,6 +21,7 @@ clean:
 	rm -f *.img
 	rm -f *.tar
 	rm -rf __pycache__
+	rm -rf $(SIMULATION_DIR)
 
 ##### Workflow Commands #####
 
@@ -59,3 +62,13 @@ SUITE_FILES = check_dump.py test_lab4_ext.py dump_block.py
 suite: lab4-test-suite.tar
 lab4-test-suite.tar: $(SUITE_FILES)
 	tar -cf $@ $^
+
+# Simulate running the setup script.
+.PHONY: simulate
+simulate:
+	-mkdir $(SIMULATION_DIR)
+	./setup.sh $(SIMULATION_DIR)
+	@echo
+	ls -l $(SIMULATION_DIR)
+	@echo
+	grep --color=always -B 1 -A 6 "# Test suite" $(SIMULATION_DIR)/.gitignore

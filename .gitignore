@@ -189,6 +189,9 @@ mnt/
 # My lab implementation file lol
 ext2-create.c
 
+# When simulating the suite setup script
+setup-test/
+
 ##### END: Custom addendums to the official .gitignore template. #####
 
 # Prerequisites
