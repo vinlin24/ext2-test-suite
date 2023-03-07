@@ -109,13 +109,17 @@ parser.add_argument("block_nums", metavar="BLOCK",
                     nargs="*", type=valid_blockno, default=[1],
                     help="number or name of block(s) to dump")
 
-parser.add_argument("-o", "--offset", metavar="NBYTES",
+# Added -s as an alias to be consistent with xxd's offset option.
+parser.add_argument("-o", "-s", "--offset", metavar="NBYTES",
                     type=valid_offset, default=0,
                     help="offset within the block")
 
 parser.add_argument("-l", "--length", metavar="NBYTES",
                     type=valid_offset, default=1024,
                     help="amount of block to dump")
+
+parser.add_argument("-q", "--quiet", action="store_true",
+                    help="output only what xxd does")
 
 parser.add_argument("-b", "--binary", action="store_true",
                     help="use binary instead of hexadecimal")
@@ -191,6 +195,7 @@ def main() -> None:
     block_nums = namespace.block_nums
     offset = namespace.offset
     length = namespace.length
+    quiet = namespace.quiet
 
     # Don't let length go beyond a block.
     length = bound_length(length, offset)
@@ -208,15 +213,17 @@ def main() -> None:
         command = prepare_xxd(absolute_offset, length, binary)
         output = run(command).stdout.decode()
 
-        # Echo the underlying command.
-        print(f"{BLACK}{command}{END}")
+        if not quiet:
+            # Echo the underlying command.
+            print(f"{BLACK}{command}{END}")
 
         # Format the header.
-        slicing = f"{offset}:{offset+length}"
-        location = f"{block_num:04} @ {hex(absolute_offset)}"
-        header = f"BLOCK {location} [{slicing}]"
-        suffix = "" if name is None else f" ({name})"
-        print(f"{GREEN}{header}{END}{YELLOW}{suffix}{END}")
+        if not quiet:
+            slicing = f"{offset}:{offset+length}"
+            location = f"{block_num:04} @ {hex(absolute_offset)}"
+            header = f"BLOCK {location} [{slicing}]"
+            suffix = "" if name is None else f" ({name})"
+            print(f"{GREEN}{header}{END}{YELLOW}{suffix}{END}")
 
         print(output)
 
