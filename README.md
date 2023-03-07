@@ -24,6 +24,9 @@ If this repository updates between now and the due date, you can simply pull in 
 ## Scripts
 
 
+You can also see [my Piazza post](https://piazza.com/class/lcjl27z4agp66l/post/407) for alternative descriptions of these scripts as well as images of their demo.
+
+
 ### test_lab4_ext.py
 
 
@@ -76,11 +79,18 @@ This script just takes the tediousness out of manually comparing your `dumpe2fs`
 ./dump_block.py --help # See all available options
 ```
 
-For more blunt or last-resort debugging, this script uses and formats the output of the [GNU `xxd`](https://linux.die.net/man/1/xxd) command to dump the binary data of the specified block(s) within your 1 MiB cs111-base.img file.
+For more blunt or last-resort debugging, this script uses and formats the output of the [GNU `xxd`](https://linux.die.net/man/1/xxd) command to dump the binary data of the specified block within your 1 MiB cs111-base.img file.
 
 Probably just useful to see if you have garbage at a block for some reason to be honest. Theoretically you could "check for a specific `struct` field", which I was really excited to implement but realized that required people to be desperate enough to count with fingers and do `struct` offset arithmetic. GDB is faster lol.
 
 Might make this a bit more usable if I can be bothered to.
+
+**UPDATE:** I added the `--quiet` option which suppresses my custom format additions (only output what `xxd` does). This should let you be able to use this script in combination with coreutil text processing. For example:
+
+```sh
+# Count the number of cleared bits in your inode bitmap
+./dump_block.py inode_bitmap --quiet -c 1 --binary | awk '{print $2}' | grep -o 0 | wc -l
+```
 
 
 ## Contribution
