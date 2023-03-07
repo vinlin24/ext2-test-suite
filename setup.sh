@@ -16,7 +16,7 @@ if [ ! -d "$lab_dir" ]; then
 fi
 
 # Overengineering be like.
-tarball_name=$(sed -En 's/all: (.+)$/\1/p' Makefile)
+tarball_name=$(sed -En 's/suite: (.+)$/\1/p' Makefile)
 suite_files=$(sed -En 's/SUITE_FILES = (.+)/\1/p' Makefile | tr ' ' '\n')
 
 ignore_additions="\n# Test suite\n*.tar\n${suite_files}\n"
@@ -27,7 +27,7 @@ if grep -q '# Test suite' "${lab_dir}/.gitignore" 2>/dev/null; then
 fi
 
 # Actual setup sequence.
-make &&
+make suite &&
     cp "$tarball_name" "$lab_dir" &&
     cd "$lab_dir" &&
     tar -xf "$tarball_name" &&
