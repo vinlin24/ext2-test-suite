@@ -13,12 +13,53 @@ import re
 import subprocess
 import sys
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import List, Optional
 
 __author__ = "Vincent Lin"
 
-EXAMPLE_DUMP_TXT = Path("dump_example.txt")
+EXAMPLE_DUMP = """\
+Filesystem volume name:   cs111-base
+Last mounted on:          <not available>
+Filesystem UUID:          5a1eab1e-1337-1337-1337-c0ffeec0ffee
+Filesystem magic number:  0xEF53
+Filesystem revision #:    0 (original)
+Filesystem features:      (none)
+Default mount options:    (none)
+Filesystem state:         clean
+Errors behavior:          Continue
+Filesystem OS type:       Linux
+Inode count:              128
+Block count:              1024
+Reserved block count:     0
+Free blocks:              1000
+Free inodes:              115
+First block:              1
+Block size:               1024
+Fragment size:            1024
+Blocks per group:         8192
+Fragments per group:      8192
+Inodes per group:         128
+Inode blocks per group:   16
+Last mount time:          n/a
+Last write time:          Fri Mar  4 12:01:48 2022
+Mount count:              0
+Maximum mount count:      -1
+Last checked:             Fri Mar  4 12:01:48 2022
+Check interval:           1 (0:00:01)
+Next check after:         Fri Mar  4 12:01:49 2022
+Reserved blocks uid:      0 (user root)
+Reserved blocks gid:      0 (group root)
+
+
+Group 0: (Blocks 1-1023)
+  Primary superblock at 1, Group descriptors at 2-2
+  Block bitmap at 3 (+2)
+  Inode bitmap at 4 (+3)
+  Inode table at 5-20 (+4)
+  1000 free blocks, 115 free inodes, 2 directories
+  Free blocks: 24-1023
+  Free inodes: 14-128
+"""
 
 RED = "\x1b[31m"
 GREEN = "\x1b[32m"
@@ -34,11 +75,6 @@ def get_your_dump() -> str:
     run("make")
     run("./ext2-create")
     return run("dumpe2fs cs111-base.img").stdout.decode()
-
-
-def get_example_dump() -> str:
-    with EXAMPLE_DUMP_TXT.open("rt", encoding="utf-8") as txt:
-        return txt.read()
 
 
 def parse_dump_datetime(string: str) -> datetime:
@@ -189,7 +225,7 @@ def compare_group_lines(example: List[str], yours: List[str]) -> bool:
 
 
 def main() -> int:
-    example_lines = get_example_dump().splitlines()
+    example_lines = EXAMPLE_DUMP.splitlines()
     your_lines = get_your_dump().splitlines()
 
     example_fs_lines = example_lines[:31]

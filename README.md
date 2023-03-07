@@ -63,9 +63,9 @@ This script compares the output of your:
 dumpe2fs cs111-base.img
 ```
 
-To the correct output example in the implementation guide provided by TA Can Aygun in [this Piazza upload](https://cdn-uploads.piazza.com/paste/k523wap3mgt7kn/32e5cbdc2f2ad85809c6e1b9eacecce7e333648952f1b16350d368bbe1f550ed/lab4_stages_F22.html). That example output is also copied in [dump_example.txt](dump_example.txt), which is required for this script to function.
+To the correct output example in the implementation guide provided by TA Can Aygun in [this Piazza upload](https://cdn-uploads.piazza.com/paste/k523wap3mgt7kn/32e5cbdc2f2ad85809c6e1b9eacecce7e333648952f1b16350d368bbe1f550ed/lab4_stages_F22.html).
 
-This script just takes the tediousness out of manually comparing your `dumpe2fs` output every time you make a change.
+This script takes the tediousness out of manually comparing your `dumpe2fs` output every time you make a change.
 
 
 ### dump_block.py

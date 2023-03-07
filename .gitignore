@@ -175,9 +175,6 @@ cython_debug/
 *.txt
 *.log
 
-# Exceptions
-!dump_example.txt
-
 # Distribution files
 *.tar
 *.tgz
