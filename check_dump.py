@@ -237,7 +237,15 @@ def main() -> int:
     print("\n")
     group_passed = compare_group_lines(example_group_lines, your_group_lines)
 
-    return 0 if diff_passed and group_passed else 1
+    exit_success = (diff_passed and group_passed)
+    print("\n")
+    prog = sys.argv[0]
+    if exit_success:
+        print(f"{prog}: {GREEN}All fields correct!{END}")
+        return 0
+    print(f"{prog}: {RED}Mismatches detected. Expected output is in green. "
+          f"Your output is in red and marked with '!='{END}.")
+    return 1
 
 
 if __name__ == "__main__":
