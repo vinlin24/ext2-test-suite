@@ -43,6 +43,8 @@ modes, user IDs, file sizes, and of course file content. I tried to make this
 more friendly towards incremental development by automatically skipping certain
 tests if the necessary file(s) fails to mount.
 
+![image](https://user-images.githubusercontent.com/67369899/224532866-fb38be95-4aa0-46f5-ac95-2928e169ab78.png)
+
 `fsck.ext2` is great, but it also sometimes lets you get away with setting your data to something that's compliant with the ext2 standard but doesn't match the spec. Much of the tests here can also be verified by using `ls -ain mnt`, but this automates out the tediousness as well as gives you a better sanity check compared to the handout unit test every time you make a change.
 
 
@@ -65,20 +67,19 @@ To the correct output example in the implementation guide provided by TA Can
 Aygun in [this Piazza
 upload](https://cdn-uploads.piazza.com/paste/k523wap3mgt7kn/32e5cbdc2f2ad85809c6e1b9eacecce7e333648952f1b16350d368bbe1f550ed/lab4_stages_F22.html).
 
-
+<table>
 <tr>
 <th><center>With mismatches</center></th>
 <th><center>All matching</center></th>
 </tr>
-<table>
 <tr>
 <td>
 
-<!-- TODO: Add picture here. -->
+![image](https://user-images.githubusercontent.com/67369899/224532885-84337bda-e60e-47fd-beaa-41582eac62f6.png)
 </td>
 <td>
 
-<!-- TODO: Add picture here. -->
+![image](https://user-images.githubusercontent.com/67369899/224532890-a735fa98-45ac-421a-8dd6-a9860cadf37c.png)
 </td>
 </tr>
 </table>
@@ -101,6 +102,8 @@ This script uses and formats the output of the [GNU
 `xxd`](https://linux.die.net/man/1/xxd).
 
 For more blunt or last-resort debugging, `(gdb) x/1024bx` on steroids. A script that dumps a specific block(s) within your 1 MiB cs111-base.img file in a more readable binary/hexadecimal format. This can probably be useful for checking whether you have garbage/incorrect initialized data in a block for some reason.
+
+![image](https://user-images.githubusercontent.com/67369899/224532903-28fbe1f7-70c1-49b2-9c0f-b7ddc2eed8fd.png)
 
 This also separates concerns by delegating data-dumping to an external debugging
 script instead of having you write things like:
