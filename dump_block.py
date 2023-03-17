@@ -114,12 +114,12 @@ parser = ArgumentParser(prog=sys.argv[0],
                         formatter_class=RawTextHelpFormatter)
 
 parser.add_argument("block_num", metavar="BLOCK", nargs="?",
-                     type=valid_blockno, default=BlockNames.SUPERBLOCK.value,
-                     help="number or name of block to dump")
+                    type=valid_blockno, default=BlockNames.SUPERBLOCK.value,
+                    help="number or name of block to dump")
 
 parser.add_argument("-a", "--all", metavar="FILE", dest="dump_file",
                     help=("dump the entire img to a file "
-                         "(ignores most other options)"))
+                          "(ignores most other options)"))
 
 # Added -s as an alias to be consistent with xxd's offset option.  Also,
 # intercepting it here will make sure it doesn't override our controlled
@@ -203,6 +203,11 @@ def main() -> None:
     binary = namespace.binary
     quiet = namespace.quiet
 
+    # Ensure that the img file exists.
+    if not IMG_FILE.exists() and not make_img():
+        sys.stderr.write(f"Could not generate {IMG_FILE}, aborting.\n")
+        sys.exit(1)
+
     if dump_file is not None:
         dump_all(Path(dump_file), binary, quiet)
         return
@@ -213,11 +218,6 @@ def main() -> None:
 
     # Don't let length go beyond a block.
     length = bound_length(length, offset)
-
-    # Ensure that the img file exists.
-    if not IMG_FILE.exists() and not make_img():
-        sys.stderr.write(f"Could not generate {IMG_FILE}, aborting.\n")
-        sys.exit(1)
 
     absolute_offset = calc_abs_offset(block_num, offset)
     command = prepare_xxd(absolute_offset, length, binary, unknowns)
